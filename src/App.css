@@ -1,0 +1,55 @@
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 10px 16px 4px;
+}
+
+.app-title {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.app-subtitle {
+  font-size: 12px;
+  color: rgba(235, 235, 245, 0.6);
+}
+
+.app-panels {
+  display: grid;
+  gap: 16px;
+}
+
+.panel {
+  padding: 18px 18px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: radial-gradient(circle at top left, rgba(73, 80, 92, 0.22), rgba(17, 17, 20, 0.96));
+  box-shadow:
+    0 18px 40px rgba(0, 0, 0, 0.6),
+    0 0 0 0.5px rgba(255, 255, 255, 0.05);
+}
+
+.panel h2 {
+  margin: 0 0 10px;
+  font-size: 17px;
+}
+
+@media (min-width: 960px) {
+  .app-panels {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    grid-auto-rows: auto;
+  }
+
+  .app-panels > :last-child {
+    grid-column: 1 / -1;
+  }
+}
