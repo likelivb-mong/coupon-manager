@@ -27,7 +27,7 @@ function substitute(template: string, vars: Record<string, string>): string {
   return out.replace(/\{\{[^}]+\}\}/g, "");
 }
 
-function buildSolapiAuth(apiKey: string, apiSecret: string): Promise<string> {
+async function buildSolapiAuth(apiKey: string, apiSecret: string): Promise<string> {
   const dateTime = new Date().toISOString().replace(/\.\d{3}Z$/, "Z");
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const saltHex = Array.from(salt)

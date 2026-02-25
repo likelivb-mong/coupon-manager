@@ -100,6 +100,19 @@ export default function SmsTemplatesPage({ onBack }: { onBack: () => void }) {
     setAdding(false);
   }
 
+  async function deleteTemplate(t: SmsTemplate) {
+    if (!confirm(`정말 '${t.name}' 템플릿을 영구 삭제할까요?`)) return;
+    setSaving(true);
+    setErr(null);
+    try {
+      await supabase.from("sms_templates").delete().eq("id", t.id);
+      await load();
+    } catch (e: any) {
+      setErr(e?.message ?? "삭제 실패");
+    }
+    setSaving(false);
+  }
+
   const issueTemplates = list.filter((t) => t.type === "issue");
   const verifyTemplates = list.filter((t) => t.type === "verify");
 
@@ -169,9 +182,21 @@ export default function SmsTemplatesPage({ onBack }: { onBack: () => void }) {
                 <pre style={{ marginTop: 8, whiteSpace: "pre-wrap", fontSize: 12, opacity: 0.9 }}>{t.content}</pre>
               )}
               {editingId !== t.id && (
-                <button type="button" onClick={() => { setEditingId(t.id); setEditContent(t.content); }} style={{ marginTop: 4, fontSize: 12 }}>
-                  수정
-                </button>
+                <div style={{ marginTop: 4, display: "flex", gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingId(t.id);
+                      setEditContent(t.content);
+                    }}
+                    style={{ fontSize: 12 }}
+                  >
+                    수정
+                  </button>
+                  <button type="button" onClick={() => deleteTemplate(t)} style={{ fontSize: 12, color: "tomato" }}>
+                    삭제
+                  </button>
+                </div>
               )}
             </div>
           ))}
@@ -222,9 +247,21 @@ export default function SmsTemplatesPage({ onBack }: { onBack: () => void }) {
                 <pre style={{ marginTop: 8, whiteSpace: "pre-wrap", fontSize: 12, opacity: 0.9 }}>{t.content}</pre>
               )}
               {editingId !== t.id && (
-                <button type="button" onClick={() => { setEditingId(t.id); setEditContent(t.content); }} style={{ marginTop: 4, fontSize: 12 }}>
-                  수정
-                </button>
+                <div style={{ marginTop: 4, display: "flex", gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingId(t.id);
+                      setEditContent(t.content);
+                    }}
+                    style={{ fontSize: 12 }}
+                  >
+                    수정
+                  </button>
+                  <button type="button" onClick={() => deleteTemplate(t)} style={{ fontSize: 12, color: "tomato" }}>
+                    삭제
+                  </button>
+                </div>
               )}
             </div>
           ))}
