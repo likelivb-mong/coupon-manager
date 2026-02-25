@@ -163,7 +163,32 @@ export default function CouponVerifyPanel({
 
       await logEvent("VERIFY_SUCCESS", { verifiedBranch: branch });
 
-      setMsg("✅ 사용 처리 완료!");
+      const verifiedAtStr = new Date().toLocaleString("ko-KR");
+      if (row.customer_phone) {
+        try {
+          const { data: fnData, error: fnErr } = await supabase.functions.invoke("send-coupon-sms", {
+            body: {
+              type: "verify",
+              phone: row.customer_phone,
+              couponCode: code,
+              verifiedBranch: branch,
+              verifiedAt: verifiedAtStr,
+              discountLabel: row.discount_type === "CUSTOM" ? (row.discount_custom_text ?? "") : (row.discount_type ?? ""),
+              headcountLabel: row.headcount_type === "CUSTOM" ? (row.headcount_custom_text ?? "") : (row.headcount_type ?? ""),
+            },
+          });
+          if (fnErr || !fnData?.success) {
+            setMsg("✅ 사용 처리 완료! (문자 발송 실패)");
+          } else {
+            setMsg("✅ 사용 처리 완료! 문자 발송 완료.");
+          }
+        } catch {
+          setMsg("✅ 사용 처리 완료! (문자 발송 실패)");
+        }
+      } else {
+        setMsg("✅ 사용 처리 완료!");
+      }
+
       setPw("");
       setCouponCode("");
       setCoupon(null);

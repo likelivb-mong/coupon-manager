@@ -37,6 +37,8 @@ export default function CouponIssuePanel({
   const [busy, setBusy] = useState(false);
   const [created, setCreated] = useState<CouponRow | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [smsStatus, setSmsStatus] = useState<"idle" | "sending" | "sent" | "failed">("idle");
+  const [smsError, setSmsError] = useState<string | null>(null);
 
   const pwOk = useMemo(() => pw === BRANCH_PASSWORDS[branch], [pw, branch]);
   const isAdmin = role === "admin";
@@ -53,6 +55,8 @@ export default function CouponIssuePanel({
   async function createCoupon() {
     setErr(null);
     setCreated(null);
+    setSmsStatus("idle");
+    setSmsError(null);
 
     if (!pwOk) {
       setErr("지점 비밀번호가 올바르지 않습니다.");
@@ -112,6 +116,41 @@ export default function CouponIssuePanel({
           setCreated(data as CouponRow);
           await logEvent(code, "ISSUE", { issuedBranch: branch });
           lastError = null;
+
+          setSmsStatus("sending");
+          setSmsError(null);
+          const discountLabel =
+            (data as CouponRow).discount_type === "CUSTOM"
+              ? (data as CouponRow).discount_custom_text ?? "-"
+              : (data as CouponRow).discount_type ?? "-";
+          const headcountLabel =
+            (data as CouponRow).headcount_type === "CUSTOM"
+              ? (data as CouponRow).headcount_custom_text ?? "-"
+              : (data as CouponRow).headcount_type ?? "-";
+          try {
+            const { data: fnData, error: fnErr } = await supabase.functions.invoke("send-coupon-sms", {
+              body: {
+                type: "issue",
+                phone: normalizedPhone,
+                couponCode: code,
+                discountLabel,
+                headcountLabel,
+                issuedBranch: branch,
+              },
+            });
+            if (fnErr) {
+              setSmsStatus("failed");
+              setSmsError(fnErr.message ?? "문자 발송 요청 실패");
+            } else if (fnData?.success) {
+              setSmsStatus("sent");
+            } else {
+              setSmsStatus("failed");
+              setSmsError((fnData?.error as string) ?? "문자 발송 실패");
+            }
+          } catch {
+            setSmsStatus("failed");
+            setSmsError("문자 발송 중 오류");
+          }
           break;
         }
         lastError = error;
@@ -267,6 +306,16 @@ export default function CouponIssuePanel({
             <QRCodeCanvas value={created.coupon_code} size={180} />
             <div style={{ marginTop: 8, fontSize: 12, opacity: 0.8 }}>QR 스캔하면 코드 자동입력</div>
           </div>
+
+          {smsStatus !== "idle" && (
+            <div style={{ fontSize: 13, marginTop: 8 }}>
+              {smsStatus === "sending" && <span style={{ opacity: 0.9 }}>문자 발송 중...</span>}
+              {smsStatus === "sent" && <span style={{ color: "var(--color-success, #34c759)" }}>문자 발송 완료</span>}
+              {smsStatus === "failed" && (
+                <span style={{ color: "tomato" }}>문자 발송 실패{smsError ? `: ${smsError}` : ""}</span>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
